@@ -143,7 +143,13 @@ test('config refuses credentials, and env check names them without values', () =
   writeFileSync(file, JSON.stringify({ agentId: 'banquet-captain', hubGatewayUrl: 'https://api.sprites.dev/v1/gateway/x/y', note: 'hubk_abcdefghijklmnop' }));
   assert.throws(() => loadConfig(file), /credential/);
   writeFileSync(file, JSON.stringify({ agentId: 'banquet-captain', hubGatewayUrl: 'https://api.sprites.dev/v1/gateway/x/y' }));
+  assert.equal(loadConfig(file).hubPath, '');
+  writeFileSync(file, JSON.stringify({ agentId: 'banquet-captain', hubGatewayUrl: 'https://api.sprites.dev/v1/gateway/x/y', hubPath: 'mcp/work/' }));
   assert.equal(loadConfig(file).hubPath, '/mcp/work');
+  writeFileSync(file, JSON.stringify({ agentId: 'banquet-captain', hubGatewayUrl: 'https://api.sprites.dev/v1/gateway/x/y', hubPath: '/mcp/../admin' }));
+  assert.throws(() => loadConfig(file), /plain path/);
+  assert.equal(new HubClient({ hubGatewayUrl: 'https://g/x', hubPath: '' }).endpoint, 'https://g/x');
+  assert.equal(new HubClient({ hubGatewayUrl: 'https://g/x', hubPath: '/mcp/work' }).endpoint, 'https://g/x/mcp/work');
   assert.deepEqual(findCredentialLeaks('nothing here'), []);
   assert.deepEqual(credentialEnvNames({ PATH: '/bin', GITHUB_TOKEN: 'x', OTHER: 'ghp_aaaaaaaaaaaaaaaaaaaaaaaa', ANTHROPIC_API_KEY: 'gateway' }), ['GITHUB_TOKEN', 'OTHER']);
 });
