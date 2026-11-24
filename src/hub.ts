@@ -35,7 +35,7 @@ export class HubClient {
   readonly endpoint: string;
 
   constructor(cfg: Pick<CaptainConfig, 'hubGatewayUrl' | 'hubPath'>, private readonly fetchImpl: FetchLike = fetch) {
-    this.endpoint = `${cfg.hubGatewayUrl}${cfg.hubPath.startsWith('/') ? '' : '/'}${cfg.hubPath}`;
+    this.endpoint = cfg.hubPath ? `${cfg.hubGatewayUrl}${cfg.hubPath.startsWith('/') ? '' : '/'}${cfg.hubPath}` : cfg.hubGatewayUrl;
   }
 
   private async rpc(method: string, params: Record<string, unknown>): Promise<NonNullable<RpcResponse['result']>> {

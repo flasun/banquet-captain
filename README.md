@@ -25,7 +25,7 @@ Everything in this repo, and any hub change made for the demo during the week, i
         |  Authorization: Bearer <hub key>     |   - POST /wake  -> one tick      |
         |  (added by the gateway)              |   - polls while awake            |
  Sprites API gateway  <-- no credentials ------|   - ed25519 identity key         |
- custom API connector, path allowlist          |  ~/.captain/state.json           |
+ custom API connector, base /mcp/work          |  ~/.captain/state.json           |
                                                +----------------------------------+
 ```
 
@@ -50,19 +50,19 @@ You need a Sprite, the `sprite` CLI, and a hub you own.
 
 1. **Hub key.** On the hub's `/settings/keys`, create a key named exactly like the agent id (`banquet-captain`), for the **Work** compartment, with full scope. The hub requires the agent id to match the key's name.
 2. **Connector.** In the Fly.io dashboard, go to Sprites → Connectors → Add connector → Custom API:
-   - base URL: your hub's URL
-   - token: the hub key; auth method: header, prefix `Bearer`
+   - base URL: your hub's Work MCP endpoint, e.g. `https://<hub>/mcp/work`, so the gateway can only reach that path
+   - token: the hub key
+   - auth method: **header**, prefix `Bearer` (not URL path: the hub reads the key only from the Authorization header)
    - access: turn off "Allow all sprites" and allow the name prefix `banquet-captain`
-   - endpoint allowlist (API only): `["/mcp/work"]`
-3. **Deploy** from this folder:
+3. **Deploy** from your clone of this repo:
    ```powershell
    .\scripts\deploy.ps1                 # Windows
    ```
    ```bash
    ./scripts/deploy.sh                  # macOS/Linux
    ```
-   The first run builds, makes the identity key, and stops at the config.
-4. **Config.** On the Sprite, get the connector's gateway URL and put it in `~/.captain/config.json` as `hubGatewayUrl`:
+   The Sprite clones this public repo itself at the branch you have checked out (only pushed commits deploy), so no files are uploaded and no git credentials go on the Sprite. The first run builds, makes the identity key, and stops at the config.
+4. **Config.** On the Sprite, get the connector's `gateway_base_url` and put it in `~/.captain/config.json` as `hubGatewayUrl`. Leave `hubPath` empty when the connector's base URL already ends in `/mcp/work`:
    ```bash
    sprite exec -s banquet-captain -- curl -s https://api.sprites.dev/v1/gateway/list
    ```

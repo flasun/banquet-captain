@@ -37,7 +37,7 @@ export const CAPTAIN_HOME = process.env.CAPTAIN_HOME ?? join(homedir(), '.captai
 export const CONFIG_PATH = join(CAPTAIN_HOME, 'config.json');
 
 const DEFAULTS = {
-  hubPath: '/mcp/work',
+  hubPath: '',
   taskTag: 'captain',
   surface: 'Fly.io Sprite',
   heartbeatMinutes: 10,
@@ -85,6 +85,17 @@ function str(raw: Record<string, unknown>, key: string, fallback?: string): stri
   return v.trim();
 }
 
+/** Path appended to the gateway URL. Empty when the connector's base URL already ends at the MCP endpoint (the default setup). */
+function urlPath(raw: Record<string, unknown>, key: string, fallback: string): string {
+  const envName = `CAPTAIN_${key.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`;
+  const v = process.env[envName] ?? raw[key] ?? fallback;
+  if (typeof v !== 'string') throw new ConfigError(`config: "${key}" must be a string.`);
+  const t = v.trim().replace(/\/+$/, '');
+  if (!t) return '';
+  if (/[?#]|\.\./.test(t)) throw new ConfigError(`config: "${key}" must be a plain path with no query, fragment or "..".`);
+  return t.startsWith('/') ? t : `/${t}`;
+}
+
 function num(raw: Record<string, unknown>, key: string, fallback: number, min: number, max: number): number {
   const envName = `CAPTAIN_${key.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`;
   const v = process.env[envName] !== undefined ? Number(process.env[envName]) : (raw[key] ?? fallback);
@@ -119,7 +130,7 @@ export function loadConfig(path: string = CONFIG_PATH): CaptainConfig {
   return {
     agentId,
     hubGatewayUrl,
-    hubPath: str(raw, 'hubPath', DEFAULTS.hubPath),
+    hubPath: urlPath(raw, 'hubPath', DEFAULTS.hubPath),
     taskTag: str(raw, 'taskTag', DEFAULTS.taskTag),
     ...(project ? { project } : {}),
     surface: str(raw, 'surface', DEFAULTS.surface),
